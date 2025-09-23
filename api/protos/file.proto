@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+/* С этим параметром не разобрался, вроде, можно было относительно пакета сделать, но я забил */
+option go_package = "/pkg/pb";
+
+package pictures_storage;
+
+
+
+/* Структура для запроса на добавление картинки на сервер */
+message PictureUploadRequest {
+  /* Указываем имя под которым будем сохранять изображения */
+  string name = 1;
+
+  /* Само изображение в виде байтовой последовательности */
+  bytes data = 2;
+}
+
+/* Описание изображения для отправки в виде списка таких структур клиенту */
+message PictureFile {
+  string name = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+}
+
+/* Ответ от сервера с массивом инфы внутри */
+message ListPicturesResponse {
+  repeated PictureFile pictures = 1;
+}
+
+/* Запрос файла на скачивание */
+message DownloadPictureRequest {
+  string file_name = 1;
+}
+
+/* Возвращать будем только байты. Пусть клиент думает сам как его сохранять */
+message DownloadPictureResponse {
+  bytes data = 1;
+}
+
+
+
+service PictureStorageService {
+  /* Метод загрузки файла в ФС сервака */
+  rpc UploadPicture(stream PictureUploadRequest) returns (google.protobuf.Empty);
+
+  /* Метод для получения списка загруженных картинок на сервер */
+  rpc ListStoredPictures(google.protobuf.Empty) returns (ListPicturesResponse);
+
+  /* Метод выкачивания картинки с сервака по имени */
+  rpc DownloadPicture(DownloadPictureRequest) returns (stream DownloadPictureResponse);
+}
