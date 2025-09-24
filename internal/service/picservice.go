@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/wolf3w/tag_test/internal/repo"
 	"github.com/wolf3w/tag_test/pkg/pb"
@@ -48,7 +49,7 @@ func (sr *PictureService) UploadPicture(
 			break
 		}
 		if err != nil {
-			sr.log.Error("Stream has received", zap.Error(err))
+			sr.log.Error("Upload message error", zap.Error(err))
 			return fmt.Errorf("stream receive: %w", err)
 		}
 
@@ -61,7 +62,7 @@ func (sr *PictureService) UploadPicture(
 
 	err := sr.repo.Write(fileName, receivedData)
 	if err != nil {
-		sr.log.Error("Repository caught an error", zap.Error(err))
+		sr.log.Error("Write picture", zap.Error(err))
 		return fmt.Errorf("write into repo: %w", err)
 	}
 
@@ -69,14 +70,46 @@ func (sr *PictureService) UploadPicture(
 }
 
 func (sr *PictureService) ListStoredPictures(ctx context.Context, _ *emptypb.Empty) (*pb.ListPicturesResponse, error) {
-	// TODO: Сделать
-	return nil, nil
+	rawInfo, err := sr.repo.ListPictures()
+	if err != nil {
+		sr.log.Error("List pictures", zap.Error(err))
+		return nil, fmt.Errorf("list pictures: %w", err)
+	}
+
+	picInfo := make([]*pb.PictureFile, len(rawInfo))
+	for i := range rawInfo {
+		picInfo[i] = &pb.PictureFile{
+			Name:      rawInfo[i].Name,
+			CreatedAt: timestamppb.New(rawInfo[i].CreatedAt),
+			UpdatedAt: timestamppb.New(rawInfo[i].UpdatedAt),
+		}
+	}
+
+	return &pb.ListPicturesResponse{Pictures: picInfo}, nil
 }
 
 func (sr *PictureService) DownloadPicture(
 	req *pb.DownloadPictureRequest,
 	stream grpc.ServerStreamingServer[pb.DownloadPictureResponse],
 ) error {
-	// TODO: Сделать
+	fileName := req.GetFileName()
+	picData, err := sr.repo.Read(fileName)
+	if err != nil {
+		sr.log.Error("Read picture", zap.Error(err))
+		return fmt.Errorf("read picture: %w", err)
+	}
+
+	for {
+		response := &pb.DownloadPictureResponse{Data: picData}
+		err := stream.Send(response)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			sr.log.Error("Send message error", zap.Error(err))
+			return fmt.Errorf("send response: %w", err)
+		}
+	}
+
 	return nil
 }
