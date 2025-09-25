@@ -23,15 +23,7 @@ $ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
 Затем скачать [архив](https://github.com/protocolbuffers/protobuf/releases) для винды, распаковать и добавить путь 
 до бинаря protoc в переменную `PATH`.
 
-Ставим все либы или вендорим проект:
-```shell
-$ go mod download
-```
-или
-```shell
-$ go mod vendor
-```
 И запускаем сервер:
 ```shell
-$ go build
+$ go build github.com/wolf3w/tag_test/cmd
 ```
