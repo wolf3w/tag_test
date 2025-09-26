@@ -3,7 +3,7 @@ syntax = "proto3";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
-/* С этим параметром не разобрался, вроде, можно было относительно пакета сделать, но я забил */
+/* С этим параметром не разобрался, вроде, можно было относительно пакета сделать */
 option go_package = "/pkg/pb";
 
 package pictures_storage;
@@ -45,11 +45,11 @@ message DownloadPictureResponse {
 
 service PictureStorageService {
   /* Метод загрузки файла в ФС сервака */
-  rpc UploadPicture(stream PictureUploadRequest) returns (google.protobuf.Empty);
+  rpc UploadPicture(PictureUploadRequest) returns (google.protobuf.Empty);
 
   /* Метод для получения списка загруженных картинок на сервер */
   rpc ListStoredPictures(google.protobuf.Empty) returns (ListPicturesResponse);
 
   /* Метод выкачивания картинки с сервака по имени */
-  rpc DownloadPicture(DownloadPictureRequest) returns (stream DownloadPictureResponse);
+  rpc DownloadPicture(DownloadPictureRequest) returns (DownloadPictureResponse);
 }

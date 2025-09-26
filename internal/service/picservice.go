@@ -3,10 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
-	"io"
 
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -36,40 +34,20 @@ func NewPictureService(logger *zap.Logger, storageRepository *repo.FileStorage) 
 	}
 }
 
-func (sr *PictureService) UploadPicture(
-	stream grpc.ClientStreamingServer[pb.PictureUploadRequest, emptypb.Empty],
-) error {
-	var (
-		receivedData []byte
-		fileName     string
-	)
-	for {
-		req, err := stream.Recv()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			sr.log.Error("Upload message error", zap.Error(err))
-			return fmt.Errorf("stream receive: %w", err)
-		}
-
-		if fileName == "" {
-			fileName = req.GetName()
-		}
-
-		receivedData = append(receivedData, req.GetData()...)
-	}
+func (sr *PictureService) UploadPicture(_ context.Context, req *pb.PictureUploadRequest) (*emptypb.Empty, error) {
+	fileName := req.GetName()
+	receivedData := req.GetData()
 
 	err := sr.repo.Write(fileName, receivedData)
 	if err != nil {
 		sr.log.Error("Write picture", zap.Error(err))
-		return fmt.Errorf("write into repo: %w", err)
+		return nil, fmt.Errorf("write into repo: %w", err)
 	}
 
-	return stream.SendAndClose(&emptypb.Empty{})
+	return &emptypb.Empty{}, nil
 }
 
-func (sr *PictureService) ListStoredPictures(ctx context.Context, _ *emptypb.Empty) (*pb.ListPicturesResponse, error) {
+func (sr *PictureService) ListStoredPictures(_ context.Context, _ *emptypb.Empty) (*pb.ListPicturesResponse, error) {
 	rawInfo, err := sr.repo.ListPictures()
 	if err != nil {
 		sr.log.Error("List pictures", zap.Error(err))
@@ -89,27 +67,18 @@ func (sr *PictureService) ListStoredPictures(ctx context.Context, _ *emptypb.Emp
 }
 
 func (sr *PictureService) DownloadPicture(
+	_ context.Context,
 	req *pb.DownloadPictureRequest,
-	stream grpc.ServerStreamingServer[pb.DownloadPictureResponse],
-) error {
+) (*pb.DownloadPictureResponse, error) {
 	fileName := req.GetFileName()
 	picData, err := sr.repo.Read(fileName)
 	if err != nil {
 		sr.log.Error("Read picture", zap.Error(err))
-		return fmt.Errorf("read picture: %w", err)
+		return nil, fmt.Errorf("read picture: %w", err)
 	}
 
-	for {
-		response := &pb.DownloadPictureResponse{Data: picData}
-		err := stream.Send(response)
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			sr.log.Error("Send message error", zap.Error(err))
-			return fmt.Errorf("send response: %w", err)
-		}
+	resp := &pb.DownloadPictureResponse{
+		Data: picData,
 	}
-
-	return nil
+	return resp, nil
 }

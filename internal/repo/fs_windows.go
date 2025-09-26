@@ -54,14 +54,14 @@ func (fs *FileStorage) Read(filename string) ([]byte, error) {
 	var payload []byte
 	buffer := make([]byte, 1024)
 	for {
-		_, err := file.Read(buffer)
+		n, err := file.Read(buffer)
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
 			return nil, fmt.Errorf("cannot read file: %w", err)
 		}
-		payload = append(payload, buffer...)
+		payload = append(payload, buffer[:n]...)
 	}
 	return payload, nil
 }

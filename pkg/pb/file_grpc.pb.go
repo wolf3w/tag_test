@@ -30,11 +30,11 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PictureStorageServiceClient interface {
 	// Метод загрузки файла в ФС сервака
-	UploadPicture(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[PictureUploadRequest, emptypb.Empty], error)
+	UploadPicture(ctx context.Context, in *PictureUploadRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Метод для получения списка загруженных картинок на сервер
 	ListStoredPictures(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListPicturesResponse, error)
 	// Метод выкачивания картинки с сервака по имени
-	DownloadPicture(ctx context.Context, in *DownloadPictureRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[DownloadPictureResponse], error)
+	DownloadPicture(ctx context.Context, in *DownloadPictureRequest, opts ...grpc.CallOption) (*DownloadPictureResponse, error)
 }
 
 type pictureStorageServiceClient struct {
@@ -45,18 +45,15 @@ func NewPictureStorageServiceClient(cc grpc.ClientConnInterface) PictureStorageS
 	return &pictureStorageServiceClient{cc}
 }
 
-func (c *pictureStorageServiceClient) UploadPicture(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[PictureUploadRequest, emptypb.Empty], error) {
+func (c *pictureStorageServiceClient) UploadPicture(ctx context.Context, in *PictureUploadRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &PictureStorageService_ServiceDesc.Streams[0], PictureStorageService_UploadPicture_FullMethodName, cOpts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, PictureStorageService_UploadPicture_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[PictureUploadRequest, emptypb.Empty]{ClientStream: stream}
-	return x, nil
+	return out, nil
 }
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type PictureStorageService_UploadPictureClient = grpc.ClientStreamingClient[PictureUploadRequest, emptypb.Empty]
 
 func (c *pictureStorageServiceClient) ListStoredPictures(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListPicturesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
@@ -68,35 +65,26 @@ func (c *pictureStorageServiceClient) ListStoredPictures(ctx context.Context, in
 	return out, nil
 }
 
-func (c *pictureStorageServiceClient) DownloadPicture(ctx context.Context, in *DownloadPictureRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[DownloadPictureResponse], error) {
+func (c *pictureStorageServiceClient) DownloadPicture(ctx context.Context, in *DownloadPictureRequest, opts ...grpc.CallOption) (*DownloadPictureResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &PictureStorageService_ServiceDesc.Streams[1], PictureStorageService_DownloadPicture_FullMethodName, cOpts...)
+	out := new(DownloadPictureResponse)
+	err := c.cc.Invoke(ctx, PictureStorageService_DownloadPicture_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[DownloadPictureRequest, DownloadPictureResponse]{ClientStream: stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
+	return out, nil
 }
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type PictureStorageService_DownloadPictureClient = grpc.ServerStreamingClient[DownloadPictureResponse]
 
 // PictureStorageServiceServer is the server API for PictureStorageService service.
 // All implementations must embed UnimplementedPictureStorageServiceServer
 // for forward compatibility.
 type PictureStorageServiceServer interface {
 	// Метод загрузки файла в ФС сервака
-	UploadPicture(grpc.ClientStreamingServer[PictureUploadRequest, emptypb.Empty]) error
+	UploadPicture(context.Context, *PictureUploadRequest) (*emptypb.Empty, error)
 	// Метод для получения списка загруженных картинок на сервер
 	ListStoredPictures(context.Context, *emptypb.Empty) (*ListPicturesResponse, error)
 	// Метод выкачивания картинки с сервака по имени
-	DownloadPicture(*DownloadPictureRequest, grpc.ServerStreamingServer[DownloadPictureResponse]) error
+	DownloadPicture(context.Context, *DownloadPictureRequest) (*DownloadPictureResponse, error)
 	mustEmbedUnimplementedPictureStorageServiceServer()
 }
 
@@ -107,14 +95,14 @@ type PictureStorageServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedPictureStorageServiceServer struct{}
 
-func (UnimplementedPictureStorageServiceServer) UploadPicture(grpc.ClientStreamingServer[PictureUploadRequest, emptypb.Empty]) error {
-	return status.Errorf(codes.Unimplemented, "method UploadPicture not implemented")
+func (UnimplementedPictureStorageServiceServer) UploadPicture(context.Context, *PictureUploadRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UploadPicture not implemented")
 }
 func (UnimplementedPictureStorageServiceServer) ListStoredPictures(context.Context, *emptypb.Empty) (*ListPicturesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListStoredPictures not implemented")
 }
-func (UnimplementedPictureStorageServiceServer) DownloadPicture(*DownloadPictureRequest, grpc.ServerStreamingServer[DownloadPictureResponse]) error {
-	return status.Errorf(codes.Unimplemented, "method DownloadPicture not implemented")
+func (UnimplementedPictureStorageServiceServer) DownloadPicture(context.Context, *DownloadPictureRequest) (*DownloadPictureResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DownloadPicture not implemented")
 }
 func (UnimplementedPictureStorageServiceServer) mustEmbedUnimplementedPictureStorageServiceServer() {}
 func (UnimplementedPictureStorageServiceServer) testEmbeddedByValue()                               {}
@@ -137,12 +125,23 @@ func RegisterPictureStorageServiceServer(s grpc.ServiceRegistrar, srv PictureSto
 	s.RegisterService(&PictureStorageService_ServiceDesc, srv)
 }
 
-func _PictureStorageService_UploadPicture_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(PictureStorageServiceServer).UploadPicture(&grpc.GenericServerStream[PictureUploadRequest, emptypb.Empty]{ServerStream: stream})
+func _PictureStorageService_UploadPicture_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PictureUploadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PictureStorageServiceServer).UploadPicture(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PictureStorageService_UploadPicture_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PictureStorageServiceServer).UploadPicture(ctx, req.(*PictureUploadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type PictureStorageService_UploadPictureServer = grpc.ClientStreamingServer[PictureUploadRequest, emptypb.Empty]
 
 func _PictureStorageService_ListStoredPictures_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(emptypb.Empty)
@@ -162,16 +161,23 @@ func _PictureStorageService_ListStoredPictures_Handler(srv interface{}, ctx cont
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PictureStorageService_DownloadPicture_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(DownloadPictureRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
+func _PictureStorageService_DownloadPicture_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DownloadPictureRequest)
+	if err := dec(in); err != nil {
+		return nil, err
 	}
-	return srv.(PictureStorageServiceServer).DownloadPicture(m, &grpc.GenericServerStream[DownloadPictureRequest, DownloadPictureResponse]{ServerStream: stream})
+	if interceptor == nil {
+		return srv.(PictureStorageServiceServer).DownloadPicture(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PictureStorageService_DownloadPicture_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PictureStorageServiceServer).DownloadPicture(ctx, req.(*DownloadPictureRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type PictureStorageService_DownloadPictureServer = grpc.ServerStreamingServer[DownloadPictureResponse]
 
 // PictureStorageService_ServiceDesc is the grpc.ServiceDesc for PictureStorageService service.
 // It's only intended for direct use with grpc.RegisterService,
@@ -181,21 +187,18 @@ var PictureStorageService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*PictureStorageServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "UploadPicture",
+			Handler:    _PictureStorageService_UploadPicture_Handler,
+		},
+		{
 			MethodName: "ListStoredPictures",
 			Handler:    _PictureStorageService_ListStoredPictures_Handler,
 		},
-	},
-	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "UploadPicture",
-			Handler:       _PictureStorageService_UploadPicture_Handler,
-			ClientStreams: true,
-		},
-		{
-			StreamName:    "DownloadPicture",
-			Handler:       _PictureStorageService_DownloadPicture_Handler,
-			ServerStreams: true,
+			MethodName: "DownloadPicture",
+			Handler:    _PictureStorageService_DownloadPicture_Handler,
 		},
 	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "file.proto",
 }

@@ -71,32 +71,23 @@ func (cs *ClientSuite) TearDownTest() {
 func (cs *ClientSuite) TestUpload() {
 	ctx := context.Background()
 
-	sender, err := cs.client.UploadPicture(ctx)
-	cs.Require().NoError(err)
-
 	req := &pb.PictureUploadRequest{
 		Name: "test_1.png",
 		Data: baseImgOne,
 	}
 
-	err = sender.Send(req)
+	_, err := cs.client.UploadPicture(ctx, req)
 	cs.Require().NoError(err)
 
-	err = sender.CloseSend()
+	resp, err := cs.client.ListStoredPictures(ctx, nil)
 	cs.Require().NoError(err)
 
-	list, err := cs.client.ListStoredPictures(ctx, nil)
-	cs.Require().NoError(err)
-
-	cs.Require().NotNil(list.Pictures)
-	cs.Require().Equal(list.Pictures[0].Name, "test_1.png")
+	cs.Require().NotNil(resp.Pictures)
+	cs.Require().Equal(resp.Pictures[0].Name, "test_1.png")
 }
 
 func (cs *ClientSuite) TestUploadAndDownload() {
 	ctx := context.Background()
-
-	sender, err := cs.client.UploadPicture(ctx)
-	cs.Require().NoError(err)
 
 	reqOne := &pb.PictureUploadRequest{
 		Name: "test_2.png",
@@ -107,13 +98,23 @@ func (cs *ClientSuite) TestUploadAndDownload() {
 		Data: baseImgThree,
 	}
 
-	err = sender.Send(reqOne)
+	_, err := cs.client.UploadPicture(ctx, reqOne)
 	cs.Require().NoError(err)
 
-	err = sender.Send(reqTwo)
+	_, err = cs.client.UploadPicture(ctx, reqTwo)
 	cs.Require().NoError(err)
 
-	err = sender.CloseSend()
+	listResp, err := cs.client.ListStoredPictures(ctx, nil)
 	cs.Require().NoError(err)
 
+	cs.Require().NotNil(listResp.Pictures)
+	cs.Require().Len(listResp.Pictures, 3)
+
+	downloadReq := &pb.DownloadPictureRequest{FileName: "test_3.png"}
+
+	downloadResp, err := cs.client.DownloadPicture(ctx, downloadReq)
+	cs.Require().NoError(err)
+
+	cs.Require().NotNil(downloadResp)
+	cs.Require().EqualValues(baseImgThree, downloadResp.Data)
 }

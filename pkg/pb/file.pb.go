@@ -294,11 +294,11 @@ const file_file_proto_rawDesc = "" +
 	"\x16DownloadPictureRequest\x12\x1b\n" +
 	"\tfile_name\x18\x01 \x01(\tR\bfileName\"-\n" +
 	"\x17DownloadPictureResponse\x12\x12\n" +
-	"\x04data\x18\x01 \x01(\fR\x04data2\xaa\x02\n" +
-	"\x15PictureStorageService\x12Q\n" +
-	"\rUploadPicture\x12&.pictures_storage.PictureUploadRequest\x1a\x16.google.protobuf.Empty(\x01\x12T\n" +
-	"\x12ListStoredPictures\x12\x16.google.protobuf.Empty\x1a&.pictures_storage.ListPicturesResponse\x12h\n" +
-	"\x0fDownloadPicture\x12(.pictures_storage.DownloadPictureRequest\x1a).pictures_storage.DownloadPictureResponse0\x01B\tZ\a/pkg/pbb\x06proto3"
+	"\x04data\x18\x01 \x01(\fR\x04data2\xa6\x02\n" +
+	"\x15PictureStorageService\x12O\n" +
+	"\rUploadPicture\x12&.pictures_storage.PictureUploadRequest\x1a\x16.google.protobuf.Empty\x12T\n" +
+	"\x12ListStoredPictures\x12\x16.google.protobuf.Empty\x1a&.pictures_storage.ListPicturesResponse\x12f\n" +
+	"\x0fDownloadPicture\x12(.pictures_storage.DownloadPictureRequest\x1a).pictures_storage.DownloadPictureResponseB\tZ\a/pkg/pbb\x06proto3"
 
 var (
 	file_file_proto_rawDescOnce sync.Once
